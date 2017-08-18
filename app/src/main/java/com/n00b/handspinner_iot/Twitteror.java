@@ -47,7 +47,8 @@ public class Twitteror {
     private void showToast(String text) {
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
 
-        //アクセストークンをstringに書いたけん、その後が続き！
+        //アクセストークンをstringに書いたけん、その後が続き！だよーんwwww
+        //ハラヘッタ
     }
 
 }
