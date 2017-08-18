@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">handspinner-iot</string>
+    <string name="consumerKey">PiycsUScd5J3CEOmsruxmyzCf</string>
+    <string name="consumerSecret" >SvOa3KWTwwMY1pLJSBppOeknpaMlGpnRDc5iBtZCuf8d3Y1uCr</string>
+    <string name="accessToken">863393649081569281-IJHXfagRSyRPZsofHNgPSo6Az0f3bJi</string>
+    <string name="accessTokenSecret">Oue1f0TZGPRlMO0UXQ4fqoKiovgkkNENRGzzo0JW6lJhs</string>
 </resources>
