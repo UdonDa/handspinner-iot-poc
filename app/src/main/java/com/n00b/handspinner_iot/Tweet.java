@@ -5,19 +5,25 @@ package com.n00b.handspinner_iot;
 */
 
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.AsyncTask;
 import android.widget.Toast;
 
 import twitter4j.*;
+import twitter4j.auth.AccessToken;
 
-public class Twitteror {
+public class Tweet {
     private Twitter mTwitter;
     private Context context;
+    String TIMES = "numberOfTweet";
+    SharedPreferences preferences;
 
 
-    public Twitteror(Context c, Twitter t) {
+    public Tweet(Context c, Twitter t) {
         this.context = c;
         this.mTwitter = t;
+        preferences = c.getSharedPreferences(TIMES, Context.MODE_PRIVATE);
+
     }
 
     public void tweet() {
@@ -25,6 +31,7 @@ public class Twitteror {
             @Override
             protected Boolean doInBackground(String... strings) {
                 try {
+                    //ツイート
                     mTwitter.updateStatus("テストだよーんwww");
                     return true;
                 } catch (TwitterException e) {
@@ -42,13 +49,11 @@ public class Twitteror {
                 }
             }
         };
+        task.execute("unchi");
     }
 
     private void showToast(String text) {
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show();
-
-        //アクセストークンをstringに書いたけん、その後が続き！だよーんwwww
-        //ハラヘッタ
     }
 
 }
