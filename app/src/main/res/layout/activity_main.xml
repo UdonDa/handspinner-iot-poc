@@ -6,29 +6,29 @@
     android:layout_height="match_parent"
     tools:context="com.n00b.handspinner_iot.MainActivity">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
 
-    <Button
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/btn_tweet"
-        android:text="ツイートボタン"
-        tools:layout_editor_absoluteY="178dp"
-        tools:layout_editor_absoluteX="131dp" />
+        android:layout_height="wrap_content">
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/btn_authorization_twitter"
-        android:text="認証"
-        tools:layout_editor_absoluteY="56dp"
-        tools:layout_editor_absoluteX="148dp" />
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_tweet"
+            android:text="ツイート"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_authorization_twitter"
+            android:text="認証"/>
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/btn_intent_central"
+            android:text="Central"/>
+    </LinearLayout>
+
 
 </android.support.constraint.ConstraintLayout>
