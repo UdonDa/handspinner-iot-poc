@@ -26,6 +26,7 @@ dependencies {
     })
     compile 'com.android.support:appcompat-v7:26.+'
     compile 'com.android.support.constraint:constraint-layout:1.0.2'
+    compile 'org.twitter4j:twitter4j-core:4.0.4'
     compile 'com.github.TitleZWC:BlueToothLowEnergyLibrary:v0.1-alpha'
     testCompile 'junit:junit:4.12'
 }

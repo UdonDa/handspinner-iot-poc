@@ -40,4 +40,20 @@
     <!--android:layout_margin="@dimen/fab_margin"-->
     <!--android:src="@android:drawable/ic_dialog_email" />-->
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_tweet"
+        android:text="ツイートボタン"
+        tools:layout_editor_absoluteY="178dp"
+        tools:layout_editor_absoluteX="131dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/btn_authorization_twitter"
+        android:text="認証"
+        tools:layout_editor_absoluteY="56dp"
+        tools:layout_editor_absoluteX="148dp" />
+
 </android.support.constraint.ConstraintLayout>

@@ -1,5 +1,18 @@
 package com.n00b.handspinner_iot;
 
+
+import android.app.DownloadManager;
+import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.net.Uri;
+import android.os.AsyncTask;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.Toast;
+
 import android.annotation.TargetApi;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothGattCharacteristic;
@@ -28,9 +41,23 @@ import java.util.UUID;
 
 import cc.linkmob.bluetoothlowenergylibrary.BluetoothUtils;
 
+import twitter4j.*;
+import twitter4j.auth.AccessToken;
+import twitter4j.auth.RequestToken;
+
 public class MainActivity extends AppCompatActivity {
 
-
+    /*Twitter*/
+    Button tweetButton, authorizationTwitterButton;
+    private Twitter mTwitter;
+    private RequestToken mRequestToken;
+    public Tweet mTweet;
+    private String mCallbackURL;
+    SharedPreferences preferences;
+    Context act = this;
+    String TIMES = "numberOfTweet";
+  
+    /*Bluetooth*/
     private BluetoothUtils mBluetoothUtil;
     private LeDeviceListAdapter mLeDeviceListAdapter;
     private TextView statusTV;
@@ -40,11 +67,45 @@ public class MainActivity extends AppCompatActivity {
     private Button btnSend;
     private EditText edtSend;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        tweetButton = (Button)findViewById(R.id.btn_tweet);
+        authorizationTwitterButton = (Button)findViewById(R.id.btn_authorization_twitter);
+        preferences = act.getSharedPreferences(TIMES, Context.MODE_PRIVATE);
 
+
+        /*--- twitter ---*/
+        mCallbackURL = getString(R.string.twitter_callback_url);
+        mTwitter = TwitterUtils.getTwitterInstance(act);
+        mTweet = new Tweet(this, mTwitter);
+
+        authorizationTwitterButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                if(!TwitterUtils.hasAccessToken(act)) {
+                    SharedPreferences.Editor editor = preferences.edit();
+                    editor.putInt(TIMES, 1);
+                    editor.apply();
+                    startAuthorize();
+                } else {
+                    showToast("認証済やで");
+                }
+            }
+        });
+
+        tweetButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putInt(TIMES, preferences.getInt(TIMES,0) + 1);
+                editor.apply();
+                mTweet.tweet();
+            }
+        });
+  
         Toolbar toolbar = (Toolbar)findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -75,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
             public void onFindData(String uuid, String data) {
                 dataValue.append("接続：" + data + "\r\n");
             }
-
+          
             @Override
             public void onConnected() {
                 mListView.setVisibility(View.GONE);
@@ -111,9 +172,93 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mBluetoothUtil.onDestroy(this);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
 
+     /*--- Twitter ---*/
+    public void startAuthorize() {
+        AsyncTask<Void, Void, String> task = new AsyncTask<Void, Void, String>() {
+            @Override
+            protected String doInBackground(Void... voids) {
+                try{
+                    mRequestToken = mTwitter.getOAuthRequestToken(mCallbackURL);
+                    return mRequestToken.getAuthorizationURL();
+                } catch (TwitterException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(String url) {
+                if (url != null) {
+                    Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    startActivity(intent);
+                } else {
+
+                }
+            }
+        };
+        task.execute();
+    }
+
+    @Override
+    public void onNewIntent(Intent intent) {
+        if (intent == null
+                || intent.getData() == null
+                || !intent.getData().toString().startsWith(mCallbackURL)) {
+            return;
+        }
+        String verifier = intent.getData().getQueryParameter("oauth_verifier");
+
+        AsyncTask<String, Void, AccessToken> task = new AsyncTask<String, Void, AccessToken>() {
+            @Override
+            protected AccessToken doInBackground(String... params) {
+                try {
+                    return mTwitter.getOAuthAccessToken(mRequestToken, params[0]);
+                } catch (TwitterException e) {
+                    e.printStackTrace();
+                }
+                return null;
+            }
+
+            @Override
+            protected void onPostExecute(AccessToken accessToken) {
+                if (accessToken != null) {
+                    // 認証成功！
+                    showToast("認証成功！");
+                    successOAuth(accessToken);
+                } else {
+                    // 認証失敗。。。
+                    showToast("認証失敗。。。");
+                }
+            }
+        };
+        task.execute(verifier);
+    }
+
+    private void successOAuth(AccessToken accessToken) {
+        TwitterUtils.storeAccessToken(this, accessToken);
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        //finish();
+    }
+
+    private void showToast(String text){
+        Toast.makeText(this, text, Toast.LENGTH_SHORT).show();
+      
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -121,10 +266,19 @@ public class MainActivity extends AppCompatActivity {
             showToast("成功");
         } else {
             showToast("失败");
-
         }
     }
-
+      
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (resultCode == RESULT_OK) {
+            showToast("成功");
+        } else {
+            showToast("失败");
+        }
+    }
+     
     Toast mToast = null;
 
     private synchronized void showToast(String text) {
@@ -135,12 +289,12 @@ public class MainActivity extends AppCompatActivity {
         }
         mToast.show();
     }
-
+      
     private BluetoothGattCharacteristic mNotifyCharacteristic;
     private ListView mListView;
     UUID cId = UUID.fromString("0000ffe1-0000-1000-8000-00805f9b34fb");
     UUID sId = UUID.fromString("0000ffe0-0000-1000-8000-00805f9b34fb");
-
+      
     private void initView() {
         mListView = (ListView) findViewById(R.id.listview);
         statusTV = (TextView) findViewById(R.id.tv_status);
@@ -178,17 +332,10 @@ public class MainActivity extends AppCompatActivity {
                 edtSend.setText("");
             }
         });
-
     }
-
+      
     private String mAddress;
-
-    @Override
-    protected void onDestroy() {
-        super.onDestroy();
-        mBluetoothUtil.onDestroy(this);
-    }
-
+      
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
@@ -219,10 +366,10 @@ public class MainActivity extends AppCompatActivity {
         }
         return true;
     }
-
+      
     private boolean isScanView = true;
     private boolean isConnected = false;
-
+      
     @TargetApi(Build.VERSION_CODES.HONEYCOMB)
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -341,6 +488,5 @@ public class MainActivity extends AppCompatActivity {
     static class ViewHolder {
         TextView deviceName;
         TextView deviceAddress;
-
     }
 }
