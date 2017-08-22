@@ -1,7 +1,9 @@
 package com.n00b.handspinner_iot;
 
+import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.bluetooth.le.*;
 import android.bluetooth.le.ScanCallback;
 import android.bluetooth.le.ScanResult;
@@ -16,9 +18,16 @@ import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationManager;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -26,22 +35,35 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.util.List;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.common.api.PendingResult;
-import com.google.android.gms.common.api.Status;
-import com.google.android.gms.location.LocationRequest;
-import com.google.android.gms.location.LocationServices;
-import com.google.android.gms.location.LocationSettingsRequest;
-import com.google.android.gms.location.LocationSettingsResult;
-import com.google.android.gms.location.LocationSettingsStatusCodes;
+import android.Manifest;
+import android.app.ProgressDialog;
+import android.content.pm.PackageManager;
+import android.location.Address;
+import android.location.Geocoder;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.support.v4.app.ActivityCompat;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.List;
+
 
 import java.util.UUID;
-public class CentralActivity extends FragmentActivity implements IBleActivity{
+public class CentralActivity extends FragmentActivity implements LocationListener, IBleActivity, View.OnClickListener{
 
     public class SendDataTimer extends TimerTask {
         @Override
@@ -63,8 +85,6 @@ public class CentralActivity extends FragmentActivity implements IBleActivity{
         }
     }
 
-
-
     private BluetoothManager mBleManager;
     private BluetoothAdapter mBleAdapter;
     private BluetoothLeScanner mBleLeScanner;
@@ -81,10 +101,27 @@ public class CentralActivity extends FragmentActivity implements IBleActivity{
     private Timer timer;
     private SendDataTimer sendDataTimer;
 
+    //gps
+    Button btnCatchGps;
+    TextView txvLocation;
+    LocationManager mLocationManager;
+    ProgressDialog mProgressDialog;
+
     public void onGpsIsEnabled(){
         // 2016.03.07現在GPSを要求するのが6.0以降のみなのでOnになったら新しいAPIでScan開始.
         this.startScanByBleScanner();
     }
+
+
+        void initGpsViews() {
+            TextView txvLocation = (TextView)findViewById(R.id.txv_location);
+            Button btnCatchGps = (Button)findViewById(R.id.button);
+            btnCatchGps.setOnClickListener(this);
+
+            mLocationManager = (LocationManager)getSystemService(LOCATION_SERVICE);
+            mProgressDialog = new ProgressDialog(this);
+            mProgressDialog.setMessage("Fetching location");
+        }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -92,8 +129,87 @@ public class CentralActivity extends FragmentActivity implements IBleActivity{
         setContentView(R.layout.activity_central);
 
         init_central();
+/*
+        if (ContextCompat.checkSelfPermission(this,
+                Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION,}, REQUEST_PERMISSION);
+
+            return;
+        }
+*/
+        initGpsViews();
 
     }
+
+    @Override
+    public void onClick(View view) {
+        if (view.getId()==R.id.button) {
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)!= PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this,Manifest.permission.ACCESS_COARSE_LOCATION)!=PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Please Grant Permission from settings", Toast.LENGTH_SHORT).show();
+            }
+            else {
+                mLocationManager.requestLocationUpdates(LocationManager.NETWORK_PROVIDER,5,1200, (android.location.LocationListener) this);
+                mProgressDialog.show();
+            }
+        }
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        double latitude= location.getLatitude();
+        double longitude= location.getLongitude();
+
+        txvLocation.setText("Location.."+latitude+" : "+longitude);
+
+        mProgressDialog.dismiss();
+
+        //locationmanager.removeUpdates(this);
+
+
+        try {
+            Geocoder geocoder= new Geocoder(this);
+            List<Address> adrslist= geocoder.getFromLocation(latitude,longitude,2);
+            if (adrslist!=null && adrslist.size()>0){
+                Address address = adrslist.get(0);
+
+                StringBuffer buffer=new StringBuffer();
+                for (int i = 0; i < address.getMaxAddressLineIndex(); i++) {
+                    buffer.append(address.getAddressLine(i)+"/n");
+                }
+                txvLocation.setText(buffer.toString());
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onStatusChanged(String provider, int status, Bundle extras) {
+
+    }
+
+    @Override
+    public void onProviderEnabled(String provider) {
+
+    }
+
+    @Override
+    public void onProviderDisabled(String provider) {
+
+    }
+
+
+
+
+
+
+
+
+
+
+
+
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {

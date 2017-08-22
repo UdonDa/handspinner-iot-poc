@@ -11,6 +11,8 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.os.Build;
+import android.support.v4.app.ActivityCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -35,9 +37,13 @@ public class MainActivity extends AppCompatActivity {
     String TIMES = "numberOfTweet";
 
     /*bluetooth*/
-    Button mScanBluetooth;
+    Button mScanBluetooth,mIntentGpsActivityButton;
     private final static int REQUEST_PERMISSIONS = 1;
     private boolean isPermissionAllowed;
+
+    /*gps*/
+    private final int REQUEST_PERMISSION = 1000;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -230,6 +236,15 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+
+        mIntentGpsActivityButton = (Button)findViewById(R.id.btn_intent_gps);
+        mIntentGpsActivityButton.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, GpsActivity.class));
+            }
+        });
+
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -254,5 +269,4 @@ public class MainActivity extends AppCompatActivity {
             super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         }
     }
-
 }

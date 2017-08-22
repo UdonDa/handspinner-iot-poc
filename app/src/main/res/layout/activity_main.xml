@@ -28,6 +28,12 @@
             android:layout_height="wrap_content"
             android:id="@+id/btn_intent_central"
             android:text="Central"/>
+
+        <Button
+            android:id="@+id/btn_intent_gps"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="GPS"/>
     </LinearLayout>
 
 
